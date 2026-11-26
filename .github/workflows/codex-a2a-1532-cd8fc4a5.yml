@@ -1,0 +1,49 @@
+name: A2A client cancellation presubmit
+run-name: A2A Python 3.10 tests for 0cb5bda9
+on:
+  push:
+    branches: ["codex-ci/a2a-1532-cd8fc4a5"]
+permissions:
+  contents: read
+jobs:
+  presubmit:
+    if: github.repository == 'GoldArowana/a2a-python' && github.ref == 'refs/heads/codex-ci/a2a-1532-cd8fc4a5'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_HEAD: 0cb5bda9ea3ca6617376a7871cddb32c073772c4
+      EXPECTED_TREE: 029c33eb63f0d849331fff3f9b8cd66705dce611
+      UV_NO_CACHE: '1'
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 0cb5bda9ea3ca6617376a7871cddb32c073772c4
+          persist-credentials: false
+      - name: Check candidate identity
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
+          git diff HEAD --exit-code
+          printf 'tested_head=%s tested_tree=%s\n' "$EXPECTED_HEAD" "$EXPECTED_TREE"
+      - name: Set up uv and Python 3.10
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          python-version: '3.10'
+          enable-cache: false
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Run upstream lint and type checks
+        run: |
+          ./scripts/lint.sh
+          git diff HEAD --exit-code
+      - name: Run upstream Python tests
+        run: uv run pytest
+      - name: Run upstream coverage checks
+        run: uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=88
+      - name: Check candidate source remained unchanged
+        if: always()
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
+          git diff HEAD --exit-code
