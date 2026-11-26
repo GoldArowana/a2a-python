@@ -1,5 +1,5 @@
 name: A2A client cancellation presubmit
-run-name: A2A hosted checks for ce6db104
+run-name: A2A Python 3.10 tests for d374ecd8
 on:
   push:
     branches: ["codex-ci/a2a-client-cancellation-ce6db104"]
@@ -11,24 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      EXPECTED_HEAD: ce6db1044c34eb86d5c345baf1c584e731253c45
-      EXPECTED_TREE: 6d28a590ff50d9629186d24e8dbb7e81ffc839d9
+      EXPECTED_HEAD: d374ecd8bb914804f1ffd6040db6a9243bfb6896
+      EXPECTED_TREE: a5e8f203c12c20ece8c02df6a42c3e9bdd5a21e2
       UV_NO_CACHE: '1'
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ce6db1044c34eb86d5c345baf1c584e731253c45
+          ref: d374ecd8bb914804f1ffd6040db6a9243bfb6896
           persist-credentials: false
       - name: Check candidate identity
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
           git diff HEAD --exit-code
-      - name: Set up uv and Python 3.12
+          printf 'tested_head=%s tested_tree=%s\n' "$EXPECTED_HEAD" "$EXPECTED_TREE"
+      - name: Set up uv and Python 3.10
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
         with:
-          python-version: '3.12'
+          python-version: '3.10'
           enable-cache: false
       - name: Install locked dependencies
         run: uv sync --locked
